@@ -1,4 +1,6 @@
 /// <reference path="jquery.d.ts" />
+var GameBoardId = "game-board";
+
 var Greeter = (function () {
     function Greeter(element) {
         this.element = element;
@@ -7,8 +9,9 @@ var Greeter = (function () {
         this.element.appendChild(this.span);
         this.span.innerText = new Date().toUTCString();
 
-        $("<div/>", {
-            id: "game-board"
+        $("<canvas/>", {
+            id: GameBoardId,
+            html: "This should look like a game board"
         }).appendTo(this.element);
     }
     Greeter.prototype.start = function () {
@@ -31,6 +34,14 @@ var Cell = (function () {
     }
     return Cell;
 })();
+
+var Direction;
+(function (Direction) {
+    Direction[Direction["UP"] = 0] = "UP";
+    Direction[Direction["DOWN"] = 1] = "DOWN";
+    Direction[Direction["LEFT"] = 2] = "LEFT";
+    Direction[Direction["RIGHT"] = 3] = "RIGHT";
+})(Direction || (Direction = {}));
 
 var Snake = (function () {
     function Snake(body, direction) {
@@ -58,10 +69,43 @@ function boardDimentions(panel, cellSize) {
     };
 }
 
-window.onload = function () {
-    var foo = new Cell(1, 1);
+function createCenterCell(width, heigth) {
+    return new Cell(Math.floor(width / 2), Math.floor(heigth / 2));
+}
 
-    var el = document.getElementById('content');
+function createRandomCell(width, height) {
+    return new Cell(Math.floor((Math.random() * width)), Math.floor((Math.random() * height)));
+}
+
+function createSnake(width, height) {
+    var head = createCenterCell(width, height);
+    var body = [head];
+    return new Snake(body, 3 /* RIGHT */);
+}
+
+function createGame(panel, cellSize) {
+    var lengthToWin = 10;
+    var msPerMove = 50;
+    var dimentions = boardDimentions(panel, cellSize);
+    var apple = createRandomCell(dimentions.width, dimentions.height);
+    var snake = createSnake(dimentions.width, dimentions.height);
+    return new Game(panel, cellSize, lengthToWin, msPerMove, apple, snake);
+}
+
+function paintCell(panel, color, cellSize, cell) {
+    var canvas = document.getElementById(GameBoardId);
+
+    if (!canvas.getContext) {
+        return;
+    }
+
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = color;
+    ctx.fillRect(cellSize * cell.x, cellSize * cell.y, cellSize, cellSize);
+}
+
+window.onload = function () {
+    var el = document.getElementById("content");
     var greeter = new Greeter(el);
     greeter.start();
 };

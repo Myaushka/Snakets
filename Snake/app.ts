@@ -1,5 +1,7 @@
 /// <reference path="jquery.d.ts" />
 
+var GameBoardId = "game-board";
+
 class Greeter {
     element: HTMLElement;
     span: HTMLElement;
@@ -12,8 +14,9 @@ class Greeter {
         this.element.appendChild(this.span);
         this.span.innerText = new Date().toUTCString();
 
-        $("<div/>", {
-            id: "game-board"
+        $("<canvas/>", {
+            id: GameBoardId,
+            html: "This should look like a game board"
         }).appendTo(this.element);
     }
 
@@ -32,15 +35,22 @@ class Cell {
     }
 }
 
+enum Direction {
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+}
+
 class Snake {
-    constructor(public body: any, public direction: any) {
+    constructor(public body: any, public direction: Direction) {
     }
 }
 
 class Game {
     constructor(
         public panel: HTMLElement,
-        public cellSize: { height: number; width: number },
+        public cellSize: number,
         public lengthToWin: number,
         public msPerMove: number,
         public initialApple: Cell,
@@ -54,10 +64,43 @@ function boardDimentions(panel: HTMLElement, cellSize: number) {
     };
 }
 
-window.onload = () => {
-    var foo = new Cell(1, 1);
+function createCenterCell(width: number, heigth: number) {
+    return new Cell(Math.floor(width / 2), Math.floor(heigth / 2));
+}
 
-    var el = document.getElementById('content');
+function createRandomCell(width: number, height: number) {
+    return new Cell(Math.floor((Math.random() * width)), Math.floor((Math.random() * height)));
+}
+
+function createSnake(width: number, height: number) {
+    var head = createCenterCell(width, height);
+    var body = [head];
+    return new Snake(body, Direction.RIGHT);
+}
+
+function createGame(panel: HTMLElement, cellSize: number) {
+    var lengthToWin = 10;
+    var msPerMove = 50;
+    var dimentions = boardDimentions(panel, cellSize);
+    var apple = createRandomCell(dimentions.width, dimentions.height);
+    var snake = createSnake(dimentions.width, dimentions.height);
+    return new Game(panel, cellSize, lengthToWin, msPerMove, apple, snake);
+}
+
+function paintCell(panel: HTMLElement, color: string, cellSize: number, cell: Cell) {
+    var canvas = <HTMLCanvasElement> document.getElementById(GameBoardId);
+
+    if (!canvas.getContext) {
+        return;
+    }
+
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = color;
+    ctx.fillRect(cellSize * cell.x, cellSize * cell.y, cellSize, cellSize);
+}
+
+window.onload = () => {
+    var el = document.getElementById("content");
     var greeter = new Greeter(el);
     greeter.start();
 };
