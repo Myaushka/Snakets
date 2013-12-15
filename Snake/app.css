@@ -1,0 +1,13 @@
+﻿body {
+    font-family: 'Segoe UI', sans-serif;
+}
+
+span {
+    font-style: italic;
+}
+
+#game-board {
+    height: 500px;
+    width: 500px;
+    background-color: rosybrown;
+}
