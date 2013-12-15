@@ -88,9 +88,9 @@ function createSnake(dimensions) {
 
 // Game constuctor overload?
 function createGame(panel, cellSize) {
-    var lengthToWin = 10;
-    var msPerMove = 50;
+    var msPerMove = 100;
     var dimensions = boardDimensions(panel, cellSize);
+    var lengthToWin = dimensions.height * dimensions.width - 1;
     var apple = createRandomCell(dimensions);
     var snake = createSnake(dimensions);
     return new Game(panel, cellSize, lengthToWin, msPerMove, apple, snake);
@@ -115,12 +115,12 @@ function eraseSnake(game) {
 
 // Static game
 function paintApple(panel, cellSize, apple) {
-    paintCell(panel, "red", cellSize, apple);
+    paintCell(panel, "yellowgreen", cellSize, apple);
 }
 
 function paintSnake(panel, cellSize, snake) {
     // We only need to paint the head because the rest will have been already painted.
-    paintCell(panel, "green", cellSize, snake.head);
+    paintCell(panel, "gold", cellSize, snake.head);
 }
 
 function paintGame(game) {
@@ -152,8 +152,6 @@ function newDirection(game) {
     var head = snake.head;
     var x = head.x;
     var y = head.y;
-
-    // TODO: this is annoying. This should be cached in a game's property.
     var dimensions = boardDimensions(game.panel, game.cellSize);
     var atLeft = (x === 0);
     var atRight = (x === (dimensions.width - 1));
@@ -182,7 +180,7 @@ function newDirection(game) {
 
 function isSameOrAdjacentCell(cell1, cell2) {
     var dx = Math.abs(cell1.x - cell2.x);
-    var dy = Math.abs(cell2.y - cell2.y);
+    var dy = Math.abs(cell1.y - cell2.y);
 
     return dx <= 1 && dy <= 1;
 }
@@ -202,7 +200,7 @@ function moveSnake(game, grow) {
     var d = delta(direction);
     var head = game.snake.head;
     var newHead = new Cell(head.x + d.dx, head.y + d.dy);
-    var body = game.snake.body.concat([newHead], game.snake.body);
+    var body = [newHead].concat(game.snake.body);
     if (!grow) {
         body = removeTail(game, body);
     }
@@ -225,10 +223,9 @@ function getKeyDirection(keyCode) {
     return 0 /* NONE */;
 }
 
+// We don't want to allow the snake to go backwards, so going in the opposite direction is not valid.
 function isValidChange(keyDirection, currentDirection) {
     switch (keyDirection) {
-        case 0 /* NONE */:
-            return false;
         case 3 /* LEFT */:
             return currentDirection !== 4 /* RIGHT */;
         case 4 /* RIGHT */:
@@ -239,7 +236,7 @@ function isValidChange(keyDirection, currentDirection) {
             return currentDirection !== 1 /* UP */;
     }
 
-    return true;
+    return false;
 }
 
 var globalKeyCode;
@@ -260,7 +257,7 @@ function snakeWithKeyDirection(snake) {
 function doesHeadOverlapBody(body) {
     var head = body[0];
     for (var i = 1; i < body.length; i++) {
-        if (head === body[i]) {
+        if (head.x === body[i].x && head.y === body[i].y) {
             return true;
         }
     }
@@ -275,8 +272,8 @@ function restartGame(game) {
 
 function newGame(game, message) {
     var panel = game.panel;
-    //alert(message);
-    //return restartGame(game);
+    debugger;
+    return restartGame(game);
 }
 
 function didWin(game) {
@@ -298,7 +295,7 @@ function step(game) {
 
     if (didLose(game)) {
         return newGame(game, "You killed the snake!");
-    } else if (didWin) {
+    } else if (didWin(game)) {
         return newGame(game, "You win!");
     } else {
         game.snake = snake;
@@ -308,44 +305,36 @@ function step(game) {
 }
 
 function configurePanel(panel) {
-    $(panel).attr("tabindex", "0").on("keydown", function (ev) {
+    $(document).on("keydown", function (ev) {
         globalKeyCode = ev.keyCode;
         return false;
     });
 }
 
-var Greeter = (function () {
-    function Greeter(element) {
+var GameRunLoop = (function () {
+    function GameRunLoop(element) {
         this.element = element;
-        this.element.innerHTML += "The time is: ";
-        this.span = document.createElement('span');
-        this.element.appendChild(this.span);
-        this.span.innerText = new Date().toUTCString();
-
         var gameBoard = document.getElementById(GameBoardId);
-
         var cellSize = 20;
         this.game = createGame(document.getElementById(GameBoardId), cellSize);
+        configurePanel(this.game.panel);
         paintGame(this.game);
     }
-    Greeter.prototype.start = function () {
+    GameRunLoop.prototype.start = function () {
         var _this = this;
         this.timerToken = setInterval(function () {
-            step(_this.game);
-        }, 500);
+            _this.game = step(_this.game);
+            paintGame(_this.game);
+        }, this.game.msPerMove);
     };
 
-    Greeter.prototype.stop = function () {
+    GameRunLoop.prototype.stop = function () {
         clearTimeout(this.timerToken);
     };
-    return Greeter;
+    return GameRunLoop;
 })();
 
-var greeter;
-
 window.onload = function () {
-    var el = document.getElementById("content");
-    greeter = new Greeter(el);
-    greeter.start();
+    new GameRunLoop(document.getElementById("content")).start();
 };
 //# sourceMappingURL=app.js.map

@@ -1,5 +1,7 @@
 ﻿body {
     font-family: 'Segoe UI', sans-serif;
+    width: 100%;
+    text-align: center;
 }
 
 span {
@@ -7,7 +9,9 @@ span {
 }
 
 #game-board {
-    /*height: 500px;
-    width: 500px;*/
-    background-color: rosybrown;
+    background-color: darkolivegreen;
+}
+
+#content {
+    display: inline-block;
 }
